@@ -176,6 +176,8 @@ TIER_CLR  = {"Elite":"#FFD700","Good":"#4CAF50","Average":"#2196F3","Below Avera
 TEAM_CLR  = {"MI":"#004BA0","CSK":"#FFCC00","RCB":"#EC1C24","KKR":"#2D1259",
              "DC":"#0078BC","SRH":"#F7A721","PBKS":"#ED1B24","RR":"#FF1F4B",
              "LSG":"#A0D6B4","GT":"#1C4C9B"}
+CLUST_COLORS = ["#E87722","#2196F3","#4CAF50","#9C27B0",
+                "#F44336","#00BCD4","#FF9800","#795548"]
 T = "plotly_dark"
 ACCENT     = "#E87722"
 BG_CARD    = "#132A45"
@@ -388,8 +390,7 @@ if nav == "🏠 Home & Dataset Info":
     stats["kurt"]  = df[NUM_COLS].kurtosis().round(3)
     stats["CV%"]   = (stats["std"]/stats["mean"]*100).round(1)
     stats.columns = ["Count","Mean","Std","Min","25%","50%","75%","Max","Skew","Kurt","CV%"]
-    st.dataframe(stats.style.background_gradient(cmap="Blues", subset=["Mean","Std"])
-                 .format(precision=3), use_container_width=True, height=420)
+    st.dataframe(stats.style.format(precision=3), use_container_width=True, height=420)
 
     insight("The dataset contains <b>2,000 innings</b> across 7 IPL seasons with <b>zero missing values</b> post-cleaning. Average runs per innings is ~28 with a high CV% (~80%) indicating significant spread — typical for T20 cricket where scores range from ducks to centuries.")
 
@@ -616,8 +617,16 @@ elif nav == "📈 Correlation & Regression":
 
     cmap_ = STYLE_CLR if clr_f=="Batting_Style" else (TIER_CLR if clr_f=="Performance_Tier" else None)
     fig = px.scatter(df, x=x_f, y=y_f, color=clr_f, color_discrete_map=cmap_,
-                     trendline="ols", opacity=0.55,
+                     opacity=0.55,
                      hover_data=["Player_Name","Team","Season","Runs_Scored"])
+    # Manual regression line (no statsmodels needed)
+    _sub = df[[x_f, y_f]].dropna()
+    if len(_sub) > 1:
+        _m, _b = np.polyfit(_sub[x_f], _sub[y_f], 1)
+        _xl = np.linspace(_sub[x_f].min(), _sub[x_f].max(), 200)
+        fig.add_trace(go.Scatter(x=_xl, y=_m*_xl+_b, mode="lines",
+                                 line=dict(color="#ffffff", width=2, dash="dash"),
+                                 name="Trend", showlegend=True))
     r_val = df[[x_f, y_f]].corr().iloc[0,1]
     chart_layout(fig, f"{y_f}  vs  {x_f}  |  Pearson r = {r_val:.3f}", h=460)
     fig.add_annotation(x=0.02, y=0.97, xref="paper", yref="paper",
@@ -772,9 +781,6 @@ elif nav == "🔵 Clustering Analysis":
     cluster_labels = {str(i): f"Cluster {i+1}" for i in range(n_clust)}
     sub_cl["Cluster_Label"] = sub_cl["Cluster"].map(cluster_labels)
 
-    CLUST_COLORS = ["#E87722","#2196F3","#4CAF50","#9C27B0",
-                    "#F44336","#00BCD4","#FF9800","#795548"]
-
     # ── PCA 2D visualisation
     sec("🔵", "PCA 2D Cluster Visualisation")
     pca = PCA(n_components=2, random_state=42)
@@ -816,8 +822,7 @@ elif nav == "🔵 Clustering Analysis":
     # ── Cluster profiles
     sec("📊", "Cluster Profile — Mean Feature Values")
     cluster_profile = sub_cl.groupby("Cluster_Label")[cluster_feats].mean().round(3)
-    st.dataframe(cluster_profile.style.background_gradient(cmap="YlOrRd", axis=0)
-                 .format(precision=3), use_container_width=True)
+    st.dataframe(cluster_profile.style.format(precision=3), use_container_width=True)
 
     # ── Radar chart per cluster
     sec("🕸️", "Cluster Radar — Normalised Feature Profiles")
@@ -827,13 +832,18 @@ elif nav == "🔵 Clustering Analysis":
         radar_df[col_] = (radar_df[col_] - mn_) / (mx_ - mn_ + 1e-9) * 100
 
     categories_ = cluster_feats + [cluster_feats[0]]
+    def _hex_rgba(h, a=0.15):
+        h = h.lstrip("#")
+        r, g, b = int(h[0:2],16), int(h[2:4],16), int(h[4:6],16)
+        return f"rgba({r},{g},{b},{a})"
+
     fig = go.Figure()
     for i, (idx, row_) in enumerate(radar_df.iterrows()):
         vals_ = list(row_.values) + [row_.values[0]]
         fig.add_trace(go.Scatterpolar(r=vals_, theta=categories_,
                                       fill="toself", name=idx,
                                       line_color=CLUST_COLORS[i],
-                                      fillcolor=f"rgba{tuple(list(px.colors.hex_to_rgb(CLUST_COLORS[i]))+[0.15])}"))
+                                      fillcolor=_hex_rgba(CLUST_COLORS[i])))
     chart_layout(fig, "Normalised Radar — Cluster Feature Profiles (0–100 scale)", h=480)
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,100],
                                                   gridcolor="rgba(255,255,255,0.1)")))
@@ -889,7 +899,6 @@ elif nav == "🏆 Player Leaderboard":
 
     # Medal bar chart
     sec("🥇", f"Top {top_n} Players — {sort_by.replace('_',' ')}")
-    colors_lb = [CLUST_COLORS[i % len(CLUST_COLORS)] for i in range(len(lb_top))]
     fig = px.bar(lb_top, x="Player_Name", y=sort_by,
                  color="Batting_Style", color_discrete_map=STYLE_CLR,
                  text_auto=".2f",
@@ -901,8 +910,7 @@ elif nav == "🏆 Player Leaderboard":
 
     # Table
     sec("📋", "Full Leaderboard Table")
-    st.dataframe(lb_top.style.background_gradient(cmap="YlOrRd", subset=[sort_by])
-                 .format({"Avg_Runs":"{:.1f}","Avg_SR":"{:.1f}","Avg_BP":"{:.1f}",
+    st.dataframe(lb_top.style.format({"Avg_Runs":"{:.1f}","Avg_SR":"{:.1f}","Avg_BP":"{:.1f}",
                           "Avg_Impact":"{:.4f}","Avg_Consistency":"{:.3f}","Avg_Aggression":"{:.4f}"}),
                  use_container_width=True, height=420)
 
@@ -930,13 +938,17 @@ elif nav == "🏆 Player Leaderboard":
     v2_raw = player_radar_vals(p2)
     v1_n, v2_n = normalize_radar([v1_raw, v2_raw])
 
+    def _h2rgba(h, a=0.15):
+        h = h.lstrip("#"); r,g,b = int(h[0:2],16),int(h[2:4],16),int(h[4:6],16)
+        return f"rgba({r},{g},{b},{a})"
+
     fig = go.Figure()
     for name_, vals_, clr_ in [(p1, v1_n, ACCENT),(p2, v2_n, "#2196F3")]:
         r_ = list(vals_) + [vals_[0]]
         fig.add_trace(go.Scatterpolar(r=r_, theta=radar_cats+[radar_cats[0]],
                                       fill="toself", name=name_,
                                       line_color=clr_,
-                                      fillcolor=clr_.replace("#","rgba(").replace(")",",0.15)")))
+                                      fillcolor=_h2rgba(clr_)))
     chart_layout(fig, f"Radar Comparison: {p1}  vs  {p2}", h=480)
     fig.update_layout(polar=dict(radialaxis=dict(visible=True, range=[0,100],
                                                   gridcolor="rgba(255,255,255,0.1)")))
