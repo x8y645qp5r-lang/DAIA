@@ -1,0 +1,106 @@
+================================================================
+  IPL BATTER PERFORMANCE ANALYTICS DASHBOARD v2
+  HOW TO RUN — Complete Guide
+================================================================
+
+WHAT'S INSIDE THIS PACKAGE:
+  app.py                       ← Main Streamlit dashboard (7 pages)
+  IPL_Clean_Dataset_2000.csv   ← 2,000-row cleaned dataset
+  requirements.txt             ← Python package dependencies
+  HOW_TO_RUN.txt               ← This guide
+
+================================================================
+STEP 1 — EXTRACT ZIP
+================================================================
+  Extract all files into ONE folder. Example:
+    Windows:  C:\IPL_Dashboard\
+    Mac/Linux: ~/IPL_Dashboard/
+
+  IMPORTANT: app.py and IPL_Clean_Dataset_2000.csv
+  MUST be in the SAME folder.
+
+================================================================
+STEP 2 — INSTALL PYTHON (if not installed)
+================================================================
+  Download Python 3.9+ from: https://www.python.org/downloads/
+  ✅ Check "Add Python to PATH" during installation.
+
+================================================================
+STEP 3 — OPEN TERMINAL IN THE FOLDER
+================================================================
+  Windows:
+    - Open the extracted folder in File Explorer
+    - Click address bar, type "cmd", press Enter
+    OR: Win+R → cmd → cd C:\IPL_Dashboard
+
+  Mac/Linux:
+    - Open Terminal
+    - Type: cd ~/IPL_Dashboard
+
+================================================================
+STEP 4 — INSTALL DEPENDENCIES  (one-time only ~2 min)
+================================================================
+  pip install -r requirements.txt
+
+  Installs: streamlit, pandas, numpy, plotly,
+            scikit-learn, scipy, openpyxl
+
+================================================================
+STEP 5 — RUN THE DASHBOARD
+================================================================
+  streamlit run app.py
+
+  Browser opens automatically at: http://localhost:8501
+  If not: paste http://localhost:8501 in your browser.
+
+  ALTERNATIVE (if above doesn't work):
+    python -m streamlit run app.py
+
+================================================================
+DASHBOARD NAVIGATION (Left Sidebar)
+================================================================
+  🏠 Home & Dataset Info      → KPIs, dataset overview, stats table
+  📊 EDA & Distributions      → Box, Violin, Histogram, Phase, Trends
+  📈 Correlation & Regression → Heatmap, Scatter, Simple & Multiple Regression
+  🔵 Clustering Analysis      → Elbow, Silhouette, PCA, K-Means, 3D Scatter
+  🏆 Player Leaderboard       → Rankings, Radar, Bubble Chart, Head-to-Head
+  🔮 Predictive Insights      → Segmentation, Residuals, Model Readiness
+  💡 Key Insights Summary     → All findings + Business Validation verdict
+
+================================================================
+TROUBLESHOOTING
+================================================================
+  Error: "streamlit not found"
+  Fix:   python -m streamlit run app.py
+
+  Error: "No module named sklearn"
+  Fix:   pip install scikit-learn
+
+  Error: "FileNotFoundError: IPL_Clean_Dataset_2000.csv"
+  Fix:   Make sure CSV file is in the SAME folder as app.py
+
+  Error: Port 8501 in use
+  Fix:   streamlit run app.py --server.port 8502
+
+  To STOP dashboard: Press Ctrl + C in terminal
+
+================================================================
+GITHUB UPLOAD (for submission)
+================================================================
+  Upload ONLY these 3 files to GitHub:
+    ✅ app.py
+    ✅ requirements.txt
+    ✅ IPL_Clean_Dataset_2000.csv
+
+  DO NOT upload: ZIP files, Excel files, PNG charts
+
+================================================================
+STREAMLIT CLOUD (Free public deployment)
+================================================================
+  1. Push 3 files to GitHub
+  2. Go to share.streamlit.io
+  3. Connect your repo
+  4. Set main file = app.py
+  5. Click Deploy → Get public URL to share!
+
+================================================================
